@@ -1,17 +1,6 @@
 // Q&A Practice App using Node.js + Express + better-sqlite3
-// Features:
-// 1. Add Questions + Answers and store in SQLite DB
-// 2. Practice mode: show question first
-// 3. Click "Show Answer" to reveal answer
-// 4. Click "Next" to move to next question
-//
-// Run locally:
-// npm init -y
-// npm install express body-parser better-sqlite3
-// node qa_practice_app.js
-//
-// Open:
-// http://localhost:3000
+// Practice Session moved to TOP
+// Add Question & Answer moved to BOTTOM
 
 const express = require('express');
 const Database = require('better-sqlite3');
@@ -25,7 +14,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Database setup
-// Using /tmp because it works better inside Docker/Kubernetes
 const db = new Database('/tmp/qa.db');
 
 // Create table if not exists
@@ -99,35 +87,7 @@ app.get('/', (req, res) => {
 
     <h1>Q&A Practice App</h1>
 
-    <!-- Add Question Section -->
-    <div class="card">
-      <h2>Add Question & Answer</h2>
-
-      <form id="qaForm">
-        <input
-          type="text"
-          id="question"
-          placeholder="Enter Question"
-          required
-        />
-
-        <textarea
-          id="answer"
-          rows="4"
-          placeholder="Enter Answer"
-          required
-        ></textarea>
-
-        <button class="primary" type="submit">
-          Save
-        </button>
-      </form>
-
-      <p id="saveMsg"></p>
-    </div>
-
-
-    <!-- Practice Section -->
+    <!-- Practice Section FIRST -->
     <div class="card">
       <h2>Practice Session</h2>
 
@@ -152,6 +112,34 @@ app.get('/', (req, res) => {
       >
         Next
       </button>
+    </div>
+
+
+    <!-- Add Question Section SECOND -->
+    <div class="card">
+      <h2>Add Question & Answer</h2>
+
+      <form id="qaForm">
+        <input
+          type="text"
+          id="question"
+          placeholder="Enter Question"
+          required
+        />
+
+        <textarea
+          id="answer"
+          rows="4"
+          placeholder="Enter Answer"
+          required
+        ></textarea>
+
+        <button class="primary" type="submit">
+          Save
+        </button>
+      </form>
+
+      <p id="saveMsg"></p>
     </div>
 
 
@@ -287,7 +275,6 @@ app.post('/api/questions', (req, res) => {
     });
   }
 });
-
 
 // Start server
 app.listen(PORT, () => {
