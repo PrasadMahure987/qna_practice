@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qna_practice
+spec:
+  replicas: 6
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 3
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: qna_practice
+  template:
+    metadata:
+      labels:
+        app: qna_practice
+    spec:
+      containers:
+      - name: qna_practice-cont
+        image: prasadmahure/qna_practice:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+      imagePullSecrets:
+      - name: dockerhub-secret
