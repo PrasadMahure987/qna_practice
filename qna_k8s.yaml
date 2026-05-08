@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: qna_practice
+  name: qna-practice
 spec:
   replicas: 6
   strategy:
@@ -11,14 +11,14 @@ spec:
       maxSurge: 1
   selector:
     matchLabels:
-      app: qna_practice
+      app: qna-practice
   template:
     metadata:
       labels:
-        app: qna_practice
+        app: qna-practice
     spec:
       containers:
-      - name: qna_practice-cont
+      - name: qna-practice-cont
         image: prasadmahure/qna_practice:latest
         imagePullPolicy: Always
         ports:
