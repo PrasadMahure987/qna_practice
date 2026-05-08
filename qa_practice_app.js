@@ -12,7 +12,7 @@
 // Open: http://localhost:3000
 
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3');
 const bodyParser = require('body-parser');
 
 const app = express();
@@ -22,17 +22,15 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Database setup
-const db = new sqlite3.Database('/tmp/qa.db');
+const db = new Database('/tmp/qa.db');
 
-db.serialize(() => {
-  db.run(`
-    CREATE TABLE IF NOT EXISTS questions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      question TEXT NOT NULL,
-      answer TEXT NOT NULL
-    )
-  `);
-});
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS questions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    question TEXT NOT NULL,
+    answer TEXT NOT NULL
+  )
+`).run();
 
 // Home page
 app.get('/', (req, res) => {
@@ -171,12 +169,12 @@ app.get('/', (req, res) => {
 
 // Get all questions
 app.get('/api/questions', (req, res) => {
-  db.all('SELECT * FROM questions ORDER BY id ASC', [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
-    res.json(rows);
-  });
+  db.all(const rows = db.prepare(
+  'SELECT * FROM questions ORDER BY id ASC'
+).all();
+
+res.json(rows);
+);
 });
 
 // Add question
@@ -187,16 +185,16 @@ app.post('/api/questions', (req, res) => {
     return res.status(400).json({ message: 'Question and Answer are required' });
   }
 
-  db.run(
-    'INSERT INTO questions (question, answer) VALUES (?, ?)',
-    [question, answer],
-    function (err) {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-      res.json({ message: 'Question saved successfully!' });
-    }
-  );
+  db.run(const stmt = db.prepare(
+  'INSERT INTO questions (question, answer) VALUES (?, ?)'
+);
+
+stmt.run(question, answer);
+
+res.json({
+  message: 'Question saved successfully!'
+});
+);
 });
 
 app.listen(PORT, () => {
