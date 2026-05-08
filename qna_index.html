@@ -1,170 +1,204 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prasad DevOps App</title>
+// Simple Node.js Q&A Practice App
+// Features:
+// 1. Add Questions + Answers and store in SQLite DB
+// 2. Practice mode: show question first
+// 3. Click "Show Answer" to reveal answer
+// 4. Click "Next" to move to next question
+//
+// Run:
+// npm init -y
+// npm install express sqlite3 body-parser
+// node qa_practice_app.js
+// Open: http://localhost:3000
 
-<style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Segoe UI', sans-serif;
-}
+const express = require('express');
+const sqlite3 = require('sqlite3').verbose();
+const bodyParser = require('body-parser');
 
-body {
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-    color: #fff;
-}
+const app = express();
+const PORT = 3000;
 
-/* HEADER */
-header {
-    text-align: center;
-    padding: 40px 20px;
-}
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-.profile-img {
-    width: 130px;
-    height: 130px;
-    border-radius: 50%;
-    border: 4px solid #00d4ff;
-    object-fit: cover;
-    box-shadow: 0 0 20px rgba(0,212,255,0.6);
-    transition: 0.3s;
-}
+// Database setup
+const db = new sqlite3.Database('./qa.db');
 
-.profile-img:hover {
-    transform: scale(1.05);
-}
+db.serialize(() => {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS questions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      question TEXT NOT NULL,
+      answer TEXT NOT NULL
+    )
+  `);
+});
 
-header h1 {
-    margin-top: 15px;
-    font-size: 32px;
-}
+// Home page
+app.get('/', (req, res) => {
+  res.send(`
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <title>Q&A Practice App</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 20px;
+      }
+      .card {
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      }
+      input, textarea {
+        width: 100%;
+        padding: 10px;
+        margin: 8px 0;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+      }
+      button {
+        padding: 10px 18px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+      .primary { background: #111827; color: white; }
+      .secondary { background: #e5e7eb; }
+      #answerBox {
+        margin-top: 15px;
+        padding: 15px;
+        background: #f9fafb;
+        border-radius: 8px;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
 
-header p {
-    color: #ccc;
-    margin-top: 5px;
-}
-
-/* CONTAINER */
-.container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 25px;
-    padding: 40px;
-}
-
-/* CARD */
-.card {
-    background: rgba(255,255,255,0.08);
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
-    padding: 20px;
-    text-align: center;
-    transition: 0.3s;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-}
-
-.card:hover {
-    transform: translateY(-10px) scale(1.03);
-    box-shadow: 0 10px 30px rgba(0,212,255,0.4);
-}
-
-/* IMAGE */
-.card img {
-    width: 100%;
-    height: 140px;
-    object-fit: contain;
-    padding: 15px;
-    background: rgba(255,255,255,0.95);
-    border-radius: 12px;
-    transition: 0.3s;
-}
-
-.card:hover img {
-    transform: scale(1.08);
-}
-
-/* TEXT */
-.card h3 {
-    margin: 15px 0 10px;
-}
-
-.card p {
-    color: #ddd;
-    font-size: 14px;
-}
-
-/* BUTTON */
-.btn {
-    display: inline-block;
-    margin-top: 12px;
-    padding: 10px 18px;
-    border-radius: 25px;
-    background: linear-gradient(45deg, #00d4ff, #007bff);
-    color: white;
-    text-decoration: none;
-    font-size: 14px;
-    transition: 0.3s;
-}
-
-.btn:hover {
-    background: linear-gradient(45deg, #007bff, #00d4ff);
-    transform: scale(1.05);
-}
-
-/* FOOTER */
-footer {
-    text-align: center;
-    padding: 15px;
-    margin-top: 20px;
-    background: rgba(0,0,0,0.4);
-    font-size: 14px;
-    color: #aaa;
-}
-</style>
-</head>
-
-<body>
-
-<header>
-    <!-- 👉 Add your photo -->
-    <img src="myphoto.jpg" alt="Prasad Mahure" class="profile-img">
-
-    <h1> Prasad's DevOps CI/CD Project</h1>
-    <p>Azure Cloud | Git-2 | Jenkins | Docker | Kubernetes | Terraform</p>
-</header>
-
-<div class="container">
+    <h1>Q&A Practice App</h1>
 
     <div class="card">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/Terraform_Logo.svg">
-        <h3>Terraform</h3>
-        <p>Automated deployment of infra on cloud platforms with Terraform.</p>
-        <a href="#" class="btn">Explore</a>
+      <h2>Add Question & Answer</h2>
+      <form id="qaForm">
+        <input type="text" id="question" placeholder="Enter Question" required />
+        <textarea id="answer" rows="4" placeholder="Enter Answer" required></textarea>
+        <button class="primary" type="submit">Save</button>
+      </form>
+      <p id="saveMsg"></p>
     </div>
 
     <div class="card">
-        <img src="https://www.docker.com/wp-content/uploads/2022/03/Moby-logo.png">
-        <h3>Docker</h3>
-        <p>Containerized application with versioned images.</p>
-        <a href="#" class="btn">Explore</a>
+      <h2>Practice Session</h2>
+      <h3 id="questionBox">Loading question...</h3>
+
+      <div id="answerBox"></div>
+
+      <br/>
+      <button class="primary" onclick="showAnswer()">Show Answer</button>
+      <button class="secondary" onclick="nextQuestion()">Next</button>
     </div>
 
-    <div class="card">
-        <img src="https://images.unsplash.com/photo-1629654297299-c8506221ca97">
-        <h3>Kubernetes</h3>
-        <p>Scalable deployment using K8s rolling updates.</p>
-        <a href="#" class="btn">Explore</a>
-    </div>
+    <script>
+      let questions = [];
+      let currentIndex = 0;
 
-</div>
+      async function loadQuestions() {
+        const res = await fetch('/api/questions');
+        questions = await res.json();
 
-<footer>
-    <p>© 2026 Prasad Mahure | DevOps Engineer 🚀</p>
-</footer>
+        if (questions.length === 0) {
+          document.getElementById('questionBox').innerText = 'No questions found. Please add some first.';
+          return;
+        }
 
-</body>
-</html>
+        renderQuestion();
+      }
+
+      function renderQuestion() {
+        const q = questions[currentIndex];
+        document.getElementById('questionBox').innerText = q.question;
+        document.getElementById('answerBox').innerText = q.answer;
+        document.getElementById('answerBox').style.display = 'none';
+      }
+
+      function showAnswer() {
+        if (questions.length > 0) {
+          document.getElementById('answerBox').style.display = 'block';
+        }
+      }
+
+      function nextQuestion() {
+        if (questions.length === 0) return;
+        currentIndex = (currentIndex + 1) % questions.length;
+        renderQuestion();
+      }
+
+      document.getElementById('qaForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const question = document.getElementById('question').value;
+        const answer = document.getElementById('answer').value;
+
+        const res = await fetch('/api/questions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question, answer })
+        });
+
+        const data = await res.json();
+        document.getElementById('saveMsg').innerText = data.message;
+
+        document.getElementById('question').value = '';
+        document.getElementById('answer').value = '';
+
+        await loadQuestions();
+      });
+
+      loadQuestions();
+    </script>
+
+  </body>
+  </html>
+  `);
+});
+
+// Get all questions
+app.get('/api/questions', (req, res) => {
+  db.all('SELECT * FROM questions ORDER BY id ASC', [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(rows);
+  });
+});
+
+// Add question
+app.post('/api/questions', (req, res) => {
+  const { question, answer } = req.body;
+
+  if (!question || !answer) {
+    return res.status(400).json({ message: 'Question and Answer are required' });
+  }
+
+  db.run(
+    'INSERT INTO questions (question, answer) VALUES (?, ?)',
+    [question, answer],
+    function (err) {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.json({ message: 'Question saved successfully!' });
+    }
+  );
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});
