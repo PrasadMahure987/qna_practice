@@ -22,7 +22,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Database setup
-const db = new sqlite3.Database('./qa.db');
+const db = new sqlite3.Database('/tmp/qa.db');
 
 db.serialize(() => {
   db.run(`
