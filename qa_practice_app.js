@@ -1,6 +1,17 @@
 // Q&A Practice App using Node.js + Express + better-sqlite3
-// Practice Session moved to TOP
-// Add Question & Answer moved to BOTTOM
+// Features:
+// 1. Add Questions + Answers and store in SQLite DB
+// 2. Practice mode: show question first
+// 3. Click "Show Answer" to reveal answer
+// 4. Click "Next" to move to next question
+//
+// Run locally:
+// npm init -y
+// npm install express body-parser better-sqlite3
+// node qa_practice_app.js
+//
+// Open:
+// http://localhost:3000
 
 const express = require('express');
 const Database = require('better-sqlite3');
@@ -14,6 +25,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Database setup
+// Using /tmp because it works better inside Docker/Kubernetes
 const db = new Database('/tmp/qa.db');
 
 // Create table if not exists
@@ -87,35 +99,7 @@ app.get('/', (req, res) => {
 
     <h1>Q&A Practice App</h1>
 
-    <!-- Practice Section FIRST -->
-    <div class="card">
-      <h2>Practice Session</h2>
-
-      <h3 id="questionBox">
-        Loading question...
-      </h3>
-
-      <div id="answerBox"></div>
-
-      <br/>
-
-      <button
-        class="primary"
-        onclick="showAnswer()"
-      >
-        Show Answer
-      </button>
-
-      <button
-        class="secondary"
-        onclick="nextQuestion()"
-      >
-        Next
-      </button>
-    </div>
-
-
-    <!-- Add Question Section SECOND -->
+    <!-- Add Question Section -->
     <div class="card">
       <h2>Add Question & Answer</h2>
 
@@ -140,6 +124,34 @@ app.get('/', (req, res) => {
       </form>
 
       <p id="saveMsg"></p>
+    </div>
+
+
+    <!-- Practice Section -->
+    <div class="card">
+      <h2>Practice Session</h2>
+
+      <h3 id="questionBox">
+        Loading question...
+      </h3>
+
+      <div id="answerBox"></div>
+
+      <br/>
+
+      <button
+        class="primary"
+        onclick="showAnswer()"
+      >
+        Show Answer
+      </button>
+
+      <button
+        class="secondary"
+        onclick="nextQuestion()"
+      >
+        Next
+      </button>
     </div>
 
 
@@ -279,5 +291,5 @@ app.post('/api/questions', (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(\`Server running at http://localhost:\${PORT}\`);
+  console.log(`Server running at http://localhost:${PORT}`);
 });
