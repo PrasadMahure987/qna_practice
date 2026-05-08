@@ -1,15 +1,13 @@
-# Use official lightweight NGINX image
-FROM nginx:alpine
+FROM node:18-alpine
 
-# Remove default nginx static files
-RUN rm -rf /usr/share/nginx/html/*
+WORKDIR /app
 
-# Copy our static website files
-COPY / /usr/share/nginx/html/
+COPY package*.json ./
 
-# Expose HTTP port
-EXPOSE 80
+RUN npm install
 
-# Start nginx in foreground
-CMD ["nginx", "-g", "daemon off;"]
+COPY . .
 
+EXPOSE 3000
+
+CMD ["node", "qa_practice_app.js"]

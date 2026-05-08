@@ -22,6 +22,6 @@ spec:
         image: prasadmahure/qna_practice:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 80
+        - containerPort: 3000
       imagePullSecrets:
       - name: dockerhub-secret
