@@ -496,8 +496,9 @@ loadQuestions();
 // GET ALL
 app.get('/api/questions', (req, res) => {
   const rows = db.prepare(`
-    SELECT * FROM questions
-    ORDER BY id DESC
+    SELECT id, category, question, answer
+    FROM questions
+    ORDER BY id ASC
   `).all();
 
   res.json(rows);
