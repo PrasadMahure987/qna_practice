@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: qna-practice
+  namespace: qna-ns
 spec:
   replicas: 6
   strategy:
@@ -17,11 +18,18 @@ spec:
       labels:
         app: qna-practice
     spec:
+      imagePullSecrets:
+        - name: dockerhub-secret
       containers:
       - name: qna-practice-cont
         image: prasadmahure/qna_practice:14
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
-      imagePullSecrets:
-      - name: dockerhub-secret
+        volumeMounts:
+        - name: qna-storage
+          mountPath: /data
+      volumes:
+      - name: qna-storage
+        persistentVolumeClaim:
+          claimName: qna-pvc

@@ -14,7 +14,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Database setup
-const db = new Database('/tmp/qa.db');
+const db = new Database('/app/data/qa.db');
 
 // Create table if not exists
 db.prepare(`
