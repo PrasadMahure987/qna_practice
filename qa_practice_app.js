@@ -153,9 +153,14 @@ async function loadQuestions() {
   const res = await fetch('/api/questions');
   allQuestions = await res.json();
 
-  populateCategory();
-  applyFilter();
+  // Always render full table first
   renderTable();
+
+  // Populate category dropdown
+  populateCategory();
+
+  // Apply filter only for Practice Session
+  applyFilter();
 }
 
 
@@ -173,13 +178,17 @@ function populateCategory() {
 
 
 function applyFilter() {
-  const cat = document.getElementById('filterCategory').value;
+  const cat =
+    document.getElementById('filterCategory').value;
 
+  // Filter only for Practice Session
   questions = allQuestions.filter(q =>
     !cat || q.category === cat
   );
 
   currentIndex = 0;
+
+  // Only practice section updates here
   renderPractice();
 }
 
