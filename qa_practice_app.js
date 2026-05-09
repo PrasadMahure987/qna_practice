@@ -148,7 +148,7 @@ table th {
 
 <body>
 
-<h1>Q&A Practice App</h1>
+<h1>DevOps Q&A Practice App</h1>
 
 <!-- PRACTICE SESSION -->
 <div class="card">
