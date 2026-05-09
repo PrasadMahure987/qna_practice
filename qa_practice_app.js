@@ -56,7 +56,7 @@ body {
   margin: 40px auto;
   padding: 20px;
   background: #001f3f;
-  color: white;
+  color: grey;
 }
 
 h1 {
