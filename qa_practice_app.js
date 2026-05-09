@@ -1,6 +1,11 @@
 // Q&A Practice App using Node.js + Express + better-sqlite3
-// Practice Session moved to TOP
-// Add Question & Answer moved to BOTTOM
+// Features:
+// 1. Practice Session on TOP
+// 2. Add Question & Answer at BOTTOM
+// 3. Edit existing questions
+// 4. Delete questions
+// 5. Serial numbers for all questions
+// 6. Persistent SQLite DB using PVC path
 
 const express = require('express');
 const Database = require('better-sqlite3');
@@ -16,7 +21,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Database setup
 const db = new Database('/app/data/qa.db');
 
-// Create table if not exists
+// Create table
 db.prepare(`
   CREATE TABLE IF NOT EXISTS questions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -26,212 +31,361 @@ db.prepare(`
 `).run();
 
 
-// Home Page
+// HOME PAGE
 app.get('/', (req, res) => {
   res.send(`
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <title>Q&A Practice App</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        max-width: 900px;
-        margin: 40px auto;
-        padding: 20px;
-      }
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Q&A Practice App</title>
 
-      .card {
-        border: 1px solid #ddd;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      }
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f9fafb;
+    }
 
-      input, textarea {
-        width: 100%;
-        padding: 10px;
-        margin: 8px 0;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-      }
+    h1 {
+      text-align: center;
+    }
 
-      button {
-        padding: 10px 18px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        margin-right: 10px;
-      }
+    .card {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 25px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
 
-      .primary {
-        background: #111827;
-        color: white;
-      }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
 
-      .secondary {
-        background: #e5e7eb;
-      }
+    button {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-top: 8px;
+    }
 
-      #answerBox {
-        margin-top: 15px;
-        padding: 15px;
-        background: #f9fafb;
-        border-radius: 8px;
-        display: none;
-      }
-    </style>
-  </head>
-  <body>
+    .primary {
+      background: #111827;
+      color: white;
+    }
 
-    <h1>Q&A Practice App</h1>
+    .secondary {
+      background: #e5e7eb;
+    }
 
-    <!-- Practice Section FIRST -->
-    <div class="card">
-      <h2>Practice Session</h2>
+    .danger {
+      background: #dc2626;
+      color: white;
+    }
 
-      <h3 id="questionBox">
-        Loading question...
-      </h3>
+    #answerBox {
+      margin-top: 15px;
+      padding: 15px;
+      background: #f3f4f6;
+      border-radius: 8px;
+      display: none;
+    }
 
-      <div id="answerBox"></div>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
 
-      <br/>
+    table th,
+    table td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    table th {
+      background: #f3f4f6;
+    }
+
+    .small-btn {
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Q&A Practice App</h1>
+
+  <!-- PRACTICE SESSION -->
+  <div class="card">
+    <h2>Practice Session</h2>
+
+    <h3 id="questionBox">
+      Loading question...
+    </h3>
+
+    <div id="answerBox"></div>
+
+    <br>
+
+    <button
+      class="primary"
+      onclick="showAnswer()">
+      Show Answer
+    </button>
+
+    <button
+      class="secondary"
+      onclick="nextQuestion()">
+      Next
+    </button>
+  </div>
+
+
+  <!-- ADD / EDIT QUESTION -->
+  <div class="card">
+    <h2>Add / Edit Question & Answer</h2>
+
+    <form id="qaForm">
+      <input
+        type="hidden"
+        id="editId"
+      />
+
+      <input
+        type="text"
+        id="question"
+        placeholder="Enter Question"
+        required
+      />
+
+      <textarea
+        id="answer"
+        rows="4"
+        placeholder="Enter Answer"
+        required
+      ></textarea>
 
       <button
         class="primary"
-        onclick="showAnswer()"
-      >
-        Show Answer
+        type="submit">
+        Save
       </button>
 
       <button
+        type="button"
         class="secondary"
-        onclick="nextQuestion()"
-      >
-        Next
+        onclick="resetForm()">
+        Cancel Edit
       </button>
-    </div>
+    </form>
+
+    <p id="saveMsg"></p>
+  </div>
 
 
-    <!-- Add Question Section SECOND -->
-    <div class="card">
-      <h2>Add Question & Answer</h2>
+  <!-- QUESTION LIST -->
+  <div class="card">
+    <h2>All Questions</h2>
 
-      <form id="qaForm">
-        <input
-          type="text"
-          id="question"
-          placeholder="Enter Question"
-          required
-        />
+    <table>
+      <thead>
+        <tr>
+          <th>Sr No.</th>
+          <th>Question</th>
+          <th>Answer</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
 
-        <textarea
-          id="answer"
-          rows="4"
-          placeholder="Enter Answer"
-          required
-        ></textarea>
-
-        <button class="primary" type="submit">
-          Save
-        </button>
-      </form>
-
-      <p id="saveMsg"></p>
-    </div>
+      <tbody id="questionTableBody">
+      </tbody>
+    </table>
+  </div>
 
 
-    <script>
-      let questions = [];
-      let currentIndex = 0;
+<script>
+  let questions = [];
+  let currentIndex = 0;
 
-      async function loadQuestions() {
-        const res = await fetch('/api/questions');
-        questions = await res.json();
+  async function loadQuestions() {
+    const res = await fetch('/api/questions');
+    questions = await res.json();
 
-        if (questions.length === 0) {
-          document.getElementById('questionBox').innerText =
-            'No questions found. Please add some first.';
-          return;
-        }
+    renderQuestionTable();
 
-        renderQuestion();
+    if (questions.length === 0) {
+      document.getElementById('questionBox').innerText =
+        'No questions found. Please add some first.';
+      document.getElementById('answerBox').innerText = '';
+      return;
+    }
+
+    if (currentIndex >= questions.length) {
+      currentIndex = 0;
+    }
+
+    renderPracticeQuestion();
+  }
+
+  function renderPracticeQuestion() {
+    const q = questions[currentIndex];
+
+    document.getElementById('questionBox').innerText =
+      q.question;
+
+    document.getElementById('answerBox').innerText =
+      q.answer;
+
+    document.getElementById('answerBox').style.display =
+      'none';
+  }
+
+  function showAnswer() {
+    if (questions.length > 0) {
+      document.getElementById('answerBox').style.display =
+        'block';
+    }
+  }
+
+  function nextQuestion() {
+    if (questions.length === 0) return;
+
+    currentIndex =
+      (currentIndex + 1) % questions.length;
+
+    renderPracticeQuestion();
+  }
+
+  function renderQuestionTable() {
+    const tbody =
+      document.getElementById('questionTableBody');
+
+    tbody.innerHTML = '';
+
+    questions.forEach((q, index) => {
+      tbody.innerHTML += \`
+        <tr>
+          <td>\${index + 1}</td>
+          <td>\${q.question}</td>
+          <td>\${q.answer}</td>
+          <td>
+            <button
+              class="secondary small-btn"
+              onclick="editQuestion(\${q.id})">
+              Edit
+            </button>
+
+            <button
+              class="danger small-btn"
+              onclick="deleteQuestion(\${q.id})">
+              Delete
+            </button>
+          </td>
+        </tr>
+      \`;
+    });
+  }
+
+  function editQuestion(id) {
+    const q = questions.find(item => item.id === id);
+
+    document.getElementById('editId').value = q.id;
+    document.getElementById('question').value = q.question;
+    document.getElementById('answer').value = q.answer;
+
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: 'smooth'
+    });
+  }
+
+  async function deleteQuestion(id) {
+    const confirmDelete =
+      confirm('Are you sure you want to delete this question?');
+
+    if (!confirmDelete) return;
+
+    await fetch('/api/questions/' + id, {
+      method: 'DELETE'
+    });
+
+    await loadQuestions();
+  }
+
+  function resetForm() {
+    document.getElementById('editId').value = '';
+    document.getElementById('question').value = '';
+    document.getElementById('answer').value = '';
+    document.getElementById('saveMsg').innerText = '';
+  }
+
+  document
+    .getElementById('qaForm')
+    .addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const id =
+        document.getElementById('editId').value;
+
+      const question =
+        document.getElementById('question').value;
+
+      const answer =
+        document.getElementById('answer').value;
+
+      let url = '/api/questions';
+      let method = 'POST';
+
+      if (id) {
+        url = '/api/questions/' + id;
+        method = 'PUT';
       }
 
-      function renderQuestion() {
-        const q = questions[currentIndex];
+      const res = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          question,
+          answer
+        })
+      });
 
-        document.getElementById('questionBox').innerText =
-          q.question;
+      const data = await res.json();
 
-        document.getElementById('answerBox').innerText =
-          q.answer;
+      document.getElementById('saveMsg').innerText =
+        data.message;
 
-        document.getElementById('answerBox').style.display =
-          'none';
-      }
+      resetForm();
+      await loadQuestions();
+    });
 
-      function showAnswer() {
-        if (questions.length > 0) {
-          document.getElementById('answerBox').style.display =
-            'block';
-        }
-      }
+  loadQuestions();
+</script>
 
-      function nextQuestion() {
-        if (questions.length === 0) return;
-
-        currentIndex =
-          (currentIndex + 1) % questions.length;
-
-        renderQuestion();
-      }
-
-      document
-        .getElementById('qaForm')
-        .addEventListener('submit', async (e) => {
-          e.preventDefault();
-
-          const question =
-            document.getElementById('question').value;
-
-          const answer =
-            document.getElementById('answer').value;
-
-          const res = await fetch('/api/questions', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              question,
-              answer
-            })
-          });
-
-          const data = await res.json();
-
-          document.getElementById('saveMsg').innerText =
-            data.message;
-
-          document.getElementById('question').value = '';
-          document.getElementById('answer').value = '';
-
-          await loadQuestions();
-        });
-
-      loadQuestions();
-    </script>
-
-  </body>
-  </html>
+</body>
+</html>
   `);
 });
 
 
-// GET all questions
+// GET ALL QUESTIONS
 app.get('/api/questions', (req, res) => {
   try {
     const rows = db.prepare(
@@ -248,7 +402,7 @@ app.get('/api/questions', (req, res) => {
 });
 
 
-// POST new question
+// ADD QUESTION
 app.post('/api/questions', (req, res) => {
   const { question, answer } = req.body;
 
@@ -259,14 +413,55 @@ app.post('/api/questions', (req, res) => {
   }
 
   try {
-    const stmt = db.prepare(
+    db.prepare(
       'INSERT INTO questions (question, answer) VALUES (?, ?)'
-    );
-
-    stmt.run(question, answer);
+    ).run(question, answer);
 
     res.json({
       message: 'Question saved successfully!'
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+});
+
+
+// UPDATE QUESTION
+app.put('/api/questions/:id', (req, res) => {
+  const { id } = req.params;
+  const { question, answer } = req.body;
+
+  try {
+    db.prepare(
+      'UPDATE questions SET question = ?, answer = ? WHERE id = ?'
+    ).run(question, answer, id);
+
+    res.json({
+      message: 'Question updated successfully!'
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+});
+
+
+// DELETE QUESTION
+app.delete('/api/questions/:id', (req, res) => {
+  const { id } = req.params;
+
+  try {
+    db.prepare(
+      'DELETE FROM questions WHERE id = ?'
+    ).run(id);
+
+    res.json({
+      message: 'Question deleted successfully!'
     });
 
   } catch (err) {

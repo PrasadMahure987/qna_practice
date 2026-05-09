@@ -22,13 +22,13 @@ spec:
         - name: dockerhub-secret
       containers:
       - name: qna-practice-cont
-        image: prasadmahure/qna_practice:14
+        image: prasadmahure/qna_practice:20
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
         volumeMounts:
         - name: qna-storage
-          mountPath: /data
+          mountPath: /app/data
       volumes:
       - name: qna-storage
         persistentVolumeClaim:
