@@ -1,9 +1,9 @@
 // Q&A Practice App using Node.js + Express + better-sqlite3
 // Features:
-// 1. Practice Session on TOP
-// 2. Add/Edit/Delete Question
-// 3. Category support
-// 4. Category shown in Practice Session
+// 1. Previous + Next question
+// 2. Category + Sub Category support
+// 3. Category/Subcategory dropdown filter in Practice Session
+// 4. Add/Edit/Delete Question
 // 5. Serial numbers
 // 6. Navy blue background
 // 7. Persistent SQLite DB using PVC path
@@ -15,32 +15,38 @@ const bodyParser = require('body-parser');
 const app = express();
 const PORT = 3000;
 
-// Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Database setup
 const db = new Database('/app/data/qa.db');
 
-// Create table with category column
+
+// CREATE TABLE
 db.prepare(`
   CREATE TABLE IF NOT EXISTS questions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     category TEXT NOT NULL DEFAULT 'General',
+    subcategory TEXT NOT NULL DEFAULT 'General',
     question TEXT NOT NULL,
     answer TEXT NOT NULL
   )
 `).run();
 
-// Add category column if old DB exists
+
+// ADD category/subcategory columns if old DB exists
 try {
   db.prepare(`
     ALTER TABLE questions
     ADD COLUMN category TEXT NOT NULL DEFAULT 'General'
   `).run();
-} catch (err) {
-  // ignore if column already exists
-}
+} catch (err) {}
+
+try {
+  db.prepare(`
+    ALTER TABLE questions
+    ADD COLUMN subcategory TEXT NOT NULL DEFAULT 'General'
+  `).run();
+} catch (err) {}
 
 
 // HOME PAGE
@@ -54,7 +60,7 @@ app.get('/', (req, res) => {
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 1100px;
+      max-width: 1200px;
       margin: 40px auto;
       padding: 20px;
       background: #001f3f;
@@ -75,7 +81,7 @@ app.get('/', (req, res) => {
       box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     }
 
-    input, textarea {
+    input, textarea, select {
       width: 100%;
       padding: 10px;
       margin: 8px 0;
@@ -157,6 +163,16 @@ app.get('/', (req, res) => {
 <div class="card">
   <h2>Practice Session</h2>
 
+  <label>Select Category</label>
+  <select id="filterCategory" onchange="applyFilter()">
+    <option value="">All Categories</option>
+  </select>
+
+  <label>Select Sub Category</label>
+  <select id="filterSubcategory" onchange="applyFilter()">
+    <option value="">All Sub Categories</option>
+  </select>
+
   <div class="category-box" id="categoryBox">
     Category: Loading...
   </div>
@@ -169,15 +185,15 @@ app.get('/', (req, res) => {
 
   <br>
 
-  <button
-    class="primary"
-    onclick="showAnswer()">
+  <button class="primary" onclick="showAnswer()">
     Show Answer
   </button>
 
-  <button
-    class="secondary"
-    onclick="nextQuestion()">
+  <button class="secondary" onclick="previousQuestion()">
+    Previous
+  </button>
+
+  <button class="secondary" onclick="nextQuestion()">
     Next
   </button>
 </div>
@@ -188,15 +204,20 @@ app.get('/', (req, res) => {
   <h2>Add / Edit Question & Answer</h2>
 
   <form id="qaForm">
-    <input
-      type="hidden"
-      id="editId"
-    />
+
+    <input type="hidden" id="editId" />
 
     <input
       type="text"
       id="category"
-      placeholder="Enter Category (Example: Azure, Linux, DevOps)"
+      placeholder="Enter Category (Example: Azure)"
+      required
+    />
+
+    <input
+      type="text"
+      id="subcategory"
+      placeholder="Enter Sub Category (Example: Networking)"
       required
     />
 
@@ -214,9 +235,7 @@ app.get('/', (req, res) => {
       required
     ></textarea>
 
-    <button
-      class="primary"
-      type="submit">
+    <button class="primary" type="submit">
       Save
     </button>
 
@@ -226,6 +245,7 @@ app.get('/', (req, res) => {
       onclick="resetForm()">
       Cancel Edit
     </button>
+
   </form>
 
   <p id="saveMsg"></p>
@@ -241,6 +261,7 @@ app.get('/', (req, res) => {
       <tr>
         <th>Sr No.</th>
         <th>Category</th>
+        <th>Sub Category</th>
         <th>Question</th>
         <th>Answer</th>
         <th>Actions</th>
@@ -253,38 +274,106 @@ app.get('/', (req, res) => {
 
 
 <script>
+let allQuestions = [];
 let questions = [];
 let currentIndex = 0;
 
+
 async function loadQuestions() {
   const res = await fetch('/api/questions');
-  questions = await res.json();
+  allQuestions = await res.json();
+
+  populateCategoryDropdown();
+  applyFilter();
+  renderQuestionTable();
+}
+
+
+function populateCategoryDropdown() {
+  const categorySelect =
+    document.getElementById('filterCategory');
+
+  const categories =
+    [...new Set(allQuestions.map(q => q.category))];
+
+  categorySelect.innerHTML =
+    '<option value="">All Categories</option>';
+
+  categories.forEach(cat => {
+    categorySelect.innerHTML +=
+      '<option value="' + cat + '">' + cat + '</option>';
+  });
+}
+
+
+function populateSubcategoryDropdown(selectedCategory) {
+  const subSelect =
+    document.getElementById('filterSubcategory');
+
+  let filtered = allQuestions;
+
+  if (selectedCategory) {
+    filtered = allQuestions.filter(
+      q => q.category === selectedCategory
+    );
+  }
+
+  const subs =
+    [...new Set(filtered.map(q => q.subcategory))];
+
+  subSelect.innerHTML =
+    '<option value="">All Sub Categories</option>';
+
+  subs.forEach(sub => {
+    subSelect.innerHTML +=
+      '<option value="' + sub + '">' + sub + '</option>';
+  });
+}
+
+
+function applyFilter() {
+  const selectedCategory =
+    document.getElementById('filterCategory').value;
+
+  populateSubcategoryDropdown(selectedCategory);
+
+  const selectedSub =
+    document.getElementById('filterSubcategory').value;
+
+  questions = allQuestions.filter(q => {
+    const categoryMatch =
+      !selectedCategory || q.category === selectedCategory;
+
+    const subMatch =
+      !selectedSub || q.subcategory === selectedSub;
+
+    return categoryMatch && subMatch;
+  });
+
+  currentIndex = 0;
 
   renderQuestionTable();
+  renderPracticeQuestion();
+}
 
+
+function renderPracticeQuestion() {
   if (questions.length === 0) {
     document.getElementById('categoryBox').innerText =
-      'Category: No category';
+      'No matching questions found';
 
     document.getElementById('questionBox').innerText =
-      'No questions found. Please add some first.';
+      'Please select another category/subcategory';
 
     document.getElementById('answerBox').innerText = '';
     return;
   }
 
-  if (currentIndex >= questions.length) {
-    currentIndex = 0;
-  }
-
-  renderPracticeQuestion();
-}
-
-function renderPracticeQuestion() {
   const q = questions[currentIndex];
 
   document.getElementById('categoryBox').innerText =
-    'Category: ' + q.category;
+    'Category: ' + q.category +
+    ' | Sub Category: ' + q.subcategory;
 
   document.getElementById('questionBox').innerText =
     q.question;
@@ -296,12 +385,14 @@ function renderPracticeQuestion() {
     'none';
 }
 
+
 function showAnswer() {
   if (questions.length > 0) {
     document.getElementById('answerBox').style.display =
       'block';
   }
 }
+
 
 function nextQuestion() {
   if (questions.length === 0) return;
@@ -312,15 +403,29 @@ function nextQuestion() {
   renderPracticeQuestion();
 }
 
+
+function previousQuestion() {
+  if (questions.length === 0) return;
+
+  currentIndex =
+    (currentIndex - 1 + questions.length) % questions.length;
+
+  renderPracticeQuestion();
+}
+
+
 function renderQuestionTable() {
-  const tbody = document.getElementById('questionTableBody');
+  const tbody =
+    document.getElementById('questionTableBody');
+
   tbody.innerHTML = '';
 
-  questions.forEach((q, index) => {
+  allQuestions.forEach((q, index) => {
     tbody.innerHTML += \`
       <tr>
         <td>\${index + 1}</td>
         <td>\${q.category}</td>
+        <td>\${q.subcategory}</td>
         <td>\${q.question}</td>
         <td>\${q.answer}</td>
         <td>
@@ -341,75 +446,87 @@ function renderQuestionTable() {
   });
 }
 
+
 function editQuestion(id) {
-  const q = questions.find(item => item.id === id);
+  const q = allQuestions.find(item => item.id === id);
 
   document.getElementById('editId').value = q.id;
   document.getElementById('category').value = q.category;
+  document.getElementById('subcategory').value = q.subcategory;
   document.getElementById('question').value = q.question;
   document.getElementById('answer').value = q.answer;
 }
 
-async function deleteQuestion(id) {
-  const confirmDelete = confirm(
-    'Are you sure you want to delete this question?'
-  );
 
-  if (!confirmDelete) return;
+async function deleteQuestion(id) {
+  if (!confirm('Delete this question?')) return;
 
   await fetch('/api/questions/' + id, {
     method: 'DELETE'
   });
 
-  await loadQuestions();
+  loadQuestions();
 }
+
 
 function resetForm() {
   document.getElementById('editId').value = '';
   document.getElementById('category').value = '';
+  document.getElementById('subcategory').value = '';
   document.getElementById('question').value = '';
   document.getElementById('answer').value = '';
   document.getElementById('saveMsg').innerText = '';
 }
 
-document
-  .getElementById('qaForm')
-  .addEventListener('submit', async (e) => {
-    e.preventDefault();
 
-    const id = document.getElementById('editId').value;
-    const category = document.getElementById('category').value;
-    const question = document.getElementById('question').value;
-    const answer = document.getElementById('answer').value;
+document.getElementById('qaForm')
+.addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-    let url = '/api/questions';
-    let method = 'POST';
+  const id =
+    document.getElementById('editId').value;
 
-    if (id) {
-      url = '/api/questions/' + id;
-      method = 'PUT';
-    }
+  const category =
+    document.getElementById('category').value;
 
-    const res = await fetch(url, {
-      method: method,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        category,
-        question,
-        answer
-      })
-    });
+  const subcategory =
+    document.getElementById('subcategory').value;
 
-    const data = await res.json();
+  const question =
+    document.getElementById('question').value;
 
-    document.getElementById('saveMsg').innerText =
-      data.message;
+  const answer =
+    document.getElementById('answer').value;
 
-    resetForm();
-    await loadQuestions();
+  let url = '/api/questions';
+  let method = 'POST';
+
+  if (id) {
+    url = '/api/questions/' + id;
+    method = 'PUT';
+  }
+
+  const res = await fetch(url, {
+    method: method,
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      category,
+      subcategory,
+      question,
+      answer
+    })
   });
+
+  const data = await res.json();
+
+  document.getElementById('saveMsg').innerText =
+    data.message;
+
+  resetForm();
+  loadQuestions();
+});
 
 loadQuestions();
 </script>
@@ -422,9 +539,10 @@ loadQuestions();
 
 // GET ALL
 app.get('/api/questions', (req, res) => {
-  const rows = db.prepare(
-    'SELECT * FROM questions ORDER BY id ASC'
-  ).all();
+  const rows = db.prepare(`
+    SELECT * FROM questions
+    ORDER BY id ASC
+  `).all();
 
   res.json(rows);
 });
@@ -432,12 +550,23 @@ app.get('/api/questions', (req, res) => {
 
 // ADD
 app.post('/api/questions', (req, res) => {
-  const { category, question, answer } = req.body;
+  const {
+    category,
+    subcategory,
+    question,
+    answer
+  } = req.body;
 
   db.prepare(`
-    INSERT INTO questions (category, question, answer)
-    VALUES (?, ?, ?)
-  `).run(category, question, answer);
+    INSERT INTO questions
+    (category, subcategory, question, answer)
+    VALUES (?, ?, ?, ?)
+  `).run(
+    category,
+    subcategory,
+    question,
+    answer
+  );
 
   res.json({
     message: 'Question saved successfully!'
@@ -448,13 +577,29 @@ app.post('/api/questions', (req, res) => {
 // UPDATE
 app.put('/api/questions/:id', (req, res) => {
   const { id } = req.params;
-  const { category, question, answer } = req.body;
+
+  const {
+    category,
+    subcategory,
+    question,
+    answer
+  } = req.body;
 
   db.prepare(`
     UPDATE questions
-    SET category = ?, question = ?, answer = ?
+    SET
+      category = ?,
+      subcategory = ?,
+      question = ?,
+      answer = ?
     WHERE id = ?
-  `).run(category, question, answer, id);
+  `).run(
+    category,
+    subcategory,
+    question,
+    answer,
+    id
+  );
 
   res.json({
     message: 'Question updated successfully!'
@@ -475,6 +620,7 @@ app.delete('/api/questions/:id', (req, res) => {
     message: 'Question deleted successfully!'
   });
 });
+
 
 // Start server
 app.listen(PORT, () => {
