@@ -50,228 +50,98 @@ app.get('/', (req, res) => {
 <title>Q&A Practice App</title>
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
 body {
-  font-family: 'Segoe UI', Arial, sans-serif;
-  background: linear-gradient(135deg, #0f172a, #1e3a8a, #0f172a);
-  min-height: 100vh;
-  padding: 30px;
+  font-family: Arial;
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 20px;
+  background: #001f3f;
   color: white;
-}
-
-.container {
-  max-width: 1200px;
-  margin: auto;
 }
 
 h1 {
   text-align: center;
-  font-size: 42px;
-  font-weight: 700;
   margin-bottom: 30px;
-  color: white;
-  text-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
-
-h2 {
-  margin-bottom: 18px;
-  color: #0f172a;
-  font-size: 24px;
-}
-
-h3 {
-  margin-top: 15px;
-  font-size: 22px;
-  color: #111827;
-  line-height: 1.6;
 }
 
 .card {
-  background: rgba(255,255,255,0.96);
-  color: black;
-  border-radius: 20px;
-  padding: 28px;
-  margin-bottom: 28px;
-  box-shadow:
-    0 10px 30px rgba(0,0,0,0.18),
-    0 2px 10px rgba(0,0,0,0.08);
-  backdrop-filter: blur(10px);
-  transition: 0.3s;
-}
-
-.card:hover {
-  transform: translateY(-2px);
-}
-
-label {
-  font-weight: 600;
-  display: block;
-  margin-bottom: 8px;
-  margin-top: 10px;
-  color: #1f2937;
-}
-
-input,
-textarea,
-select {
-  width: 100%;
-  padding: 14px 16px;
-  margin-bottom: 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
-  font-size: 15px;
-  background: #f9fafb;
-  transition: 0.2s;
-}
-
-input:focus,
-textarea:focus,
-select:focus {
-  border-color: #2563eb;
-  outline: none;
   background: white;
-  box-shadow: 0 0 0 4px rgba(37,99,235,0.08);
+  color: black;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-sizing: border-box;
 }
 
 button {
-  border: none;
-  padding: 12px 20px;
-  border-radius: 12px;
+  padding: 8px 14px;
+  margin-right: 8px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  margin-right: 10px;
-  margin-top: 10px;
-  transition: 0.25s;
-}
-
-button:hover {
-  transform: translateY(-1px);
+  border: none;
+  border-radius: 8px;
 }
 
 .primary {
-  background: linear-gradient(to right, #2563eb, #1d4ed8);
+  background: #001f3f;
   color: white;
-}
-
-.primary:hover {
-  box-shadow: 0 8px 20px rgba(37,99,235,0.25);
 }
 
 .secondary {
   background: #e5e7eb;
-  color: #111827;
-}
-
-.secondary:hover {
-  background: #d1d5db;
 }
 
 .danger {
-  background: linear-gradient(to right, #dc2626, #b91c1c);
+  background: #dc2626;
   color: white;
 }
 
-.danger:hover {
-  box-shadow: 0 8px 20px rgba(220,38,38,0.22);
-}
-
 .category-box {
-  background: linear-gradient(to right, #dbeafe, #eff6ff);
-  color: #1e3a8a;
-  padding: 16px;
-  border-radius: 14px;
-  font-weight: 700;
-  margin-top: 12px;
-  margin-bottom: 18px;
-  border-left: 6px solid #2563eb;
+  background: #dbeafe;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  font-weight: bold;
+  color: black;
 }
 
 #answerBox {
   display: none;
-  margin-top: 18px;
-  background: #f8fafc;
-  border: 1px solid #dbeafe;
-  border-left: 6px solid #2563eb;
-  padding: 18px;
-  border-radius: 14px;
-  color: #111827;
-  font-size: 15px;
-  line-height: 1.7;
+  margin-top: 10px;
+  background: #f3f4f6;
+  padding: 15px;
+  border-radius: 8px;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 18px;
-  border-radius: 14px;
-  overflow: hidden;
+  margin-top: 15px;
 }
 
-table thead {
-  background: #eff6ff;
+table th,
+table td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+  vertical-align: top;
 }
 
 table th {
-  padding: 16px;
-  text-align: left;
-  font-size: 14px;
-  color: #1e3a8a;
-  font-weight: 700;
-}
-
-table td {
-  padding: 15px;
-  border-top: 1px solid #e5e7eb;
-  vertical-align: top;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-table tr:hover {
-  background: #f8fafc;
+  background: #f3f4f6;
 }
 
 .small-btn {
-  padding: 8px 14px;
+  padding: 6px 12px;
   font-size: 13px;
-  margin-bottom: 6px;
-}
-
-#saveMsg {
-  margin-top: 15px;
-  font-weight: 600;
-  color: #059669;
-}
-
-@media (max-width: 768px) {
-  body {
-    padding: 15px;
-  }
-
-  h1 {
-    font-size: 30px;
-  }
-
-  .card {
-    padding: 18px;
-  }
-
-  table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-
-  button {
-    width: 100%;
-    margin-bottom: 10px;
-  }
 }
 </style>
 </head>
