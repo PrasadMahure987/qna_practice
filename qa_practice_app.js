@@ -11,6 +11,25 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // SQLite DB
 const db = new Database('/app/data/qa.db');
 
+// Fixed category list
+const CATEGORY_OPTIONS = [
+  'Linux',
+  'Kubernetes',
+  'Docker',
+  'Jenkins',
+  'DevOps',
+  'CiCd',
+  'Git',
+  'Ansible',
+  'Terraform',
+  'Azure',
+  'AWS',
+  'Cloud',
+  'AD',
+  'IT',
+  'Network'
+];
+
 // Create table
 db.prepare(`
   CREATE TABLE IF NOT EXISTS questions (
@@ -60,6 +79,7 @@ input, textarea, select {
   margin: 8px 0;
   border: 1px solid #ccc;
   border-radius: 8px;
+  box-sizing: border-box;
 }
 
 button {
@@ -112,6 +132,7 @@ table td {
   border: 1px solid #ddd;
   padding: 12px;
   text-align: left;
+  vertical-align: top;
 }
 
 table th {
@@ -178,11 +199,10 @@ table th {
       id="editId"
     />
 
-    <input
-      id="category"
-      placeholder="Enter Category"
-      required
-    />
+    <label>Select Category</label>
+    <select id="category" required>
+      <option value="">Select Category</option>
+    </select>
 
     <input
       id="question"
@@ -240,6 +260,38 @@ let allQuestions = [];
 let questions = [];
 let currentIndex = 0;
 
+const fixedCategories = [
+  'Linux',
+  'Kubernetes',
+  'Docker',
+  'Jenkins',
+  'DevOps',
+  'CiCd',
+  'Git',
+  'Ansible',
+  'Terraform',
+  'Azure',
+  'AWS',
+  'Cloud',
+  'AD',
+  'IT',
+  'Network'
+];
+
+
+// Load category dropdown for Add/Edit form
+function loadFormCategories() {
+  const select = document.getElementById('category');
+
+  select.innerHTML =
+    '<option value="">Select Category</option>';
+
+  fixedCategories.forEach(cat => {
+    select.innerHTML +=
+      '<option value="' + cat + '">' + cat + '</option>';
+  });
+}
+
 
 // LOAD QUESTIONS
 async function loadQuestions() {
@@ -247,24 +299,22 @@ async function loadQuestions() {
   allQuestions = await res.json();
 
   renderTable();
-  populateCategory();
+  populatePracticeCategory();
   applyFilter();
 }
 
 
-// CATEGORY DROPDOWN
-function populateCategory() {
-  const select = document.getElementById('filterCategory');
-  const selectedValue = select.value;
+// CATEGORY DROPDOWN FOR PRACTICE SESSION
+function populatePracticeCategory() {
+  const select =
+    document.getElementById('filterCategory');
 
-  const categories = [
-    ...new Set(allQuestions.map(q => q.category))
-  ];
+  const selectedValue = select.value;
 
   select.innerHTML =
     '<option value="">All Categories</option>';
 
-  categories.forEach(cat => {
+  fixedCategories.forEach(cat => {
     select.innerHTML +=
       '<option value="' + cat + '">' + cat + '</option>';
   });
@@ -482,6 +532,7 @@ document
 
 
 // INITIAL LOAD
+loadFormCategories();
 loadQuestions();
 </script>
 
