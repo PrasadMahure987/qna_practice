@@ -47,7 +47,7 @@ app.get('/', (req, res) => {
 <!DOCTYPE html>
 <html>
 <head>
-<title>Q&A Practice App</title>
+<title>DevOps Q&A Practice App</title>
 
 <style>
 body {
