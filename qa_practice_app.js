@@ -12,7 +12,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const db = new Database('/app/data/qa.db');
 
 // Create table
-// (No subcategory, fixed category dropdown)
 db.prepare(`
   CREATE TABLE IF NOT EXISTS questions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,7 +60,6 @@ input, textarea, select {
   margin: 8px 0;
   border: 1px solid #ccc;
   border-radius: 8px;
-  box-sizing: border-box;
 }
 
 button {
@@ -114,7 +112,6 @@ table td {
   border: 1px solid #ddd;
   padding: 12px;
   text-align: left;
-  vertical-align: top;
 }
 
 table th {
@@ -146,19 +143,26 @@ table th {
   </div>
 
   <h3 id="questionBox"></h3>
+
   <div id="answerBox"></div>
 
   <br>
 
-  <button class="primary" onclick="showAnswer()">
+  <button
+    class="primary"
+    onclick="showAnswer()">
     Show Answer
   </button>
 
-  <button class="secondary" onclick="previousQuestion()">
+  <button
+    class="secondary"
+    onclick="previousQuestion()">
     Previous
   </button>
 
-  <button class="secondary" onclick="nextQuestion()">
+  <button
+    class="secondary"
+    onclick="nextQuestion()">
     Next
   </button>
 </div>
@@ -169,26 +173,16 @@ table th {
   <h2>Add / Edit Question</h2>
 
   <form id="qaForm">
-    <input type="hidden" id="editId" />
+    <input
+      type="hidden"
+      id="editId"
+    />
 
-    <select id="category" required>
-      <option value="">Select Category</option>
-      <option value="Linux">Linux</option>
-      <option value="Kubernetes">Kubernetes</option>
-      <option value="Docker">Docker</option>
-      <option value="Jenkins">Jenkins</option>
-      <option value="DevOps">DevOps</option>
-      <option value="CiCd">CiCd</option>
-      <option value="Git">Git</option>
-      <option value="Ansible">Ansible</option>
-      <option value="Terraform">Terraform</option>
-      <option value="Azure">Azure</option>
-      <option value="AWS">AWS</option>
-      <option value="Cloud">Cloud</option>
-      <option value="AD">AD</option>
-      <option value="IT">IT</option>
-      <option value="Network">Network</option>
-    </select>
+    <input
+      id="category"
+      placeholder="Enter Category"
+      required
+    />
 
     <input
       id="question"
@@ -203,7 +197,9 @@ table th {
       required
     ></textarea>
 
-    <button type="submit" class="primary">
+    <button
+      type="submit"
+      class="primary">
       Save
     </button>
 
@@ -244,6 +240,8 @@ let allQuestions = [];
 let questions = [];
 let currentIndex = 0;
 
+
+// LOAD QUESTIONS
 async function loadQuestions() {
   const res = await fetch('/api/questions');
   allQuestions = await res.json();
@@ -253,37 +251,55 @@ async function loadQuestions() {
   applyFilter();
 }
 
+
+// CATEGORY DROPDOWN
 function populateCategory() {
   const select = document.getElementById('filterCategory');
   const selectedValue = select.value;
 
-  const categories = [...new Set(allQuestions.map(q => q.category))];
+  const categories = [
+    ...new Set(allQuestions.map(q => q.category))
+  ];
 
-  select.innerHTML = '<option value="">All Categories</option>';
+  select.innerHTML =
+    '<option value="">All Categories</option>';
 
   categories.forEach(cat => {
-    select.innerHTML += '<option value="' + cat + '">' + cat + '</option>';
+    select.innerHTML +=
+      '<option value="' + cat + '">' + cat + '</option>';
   });
 
   select.value = selectedValue;
 }
 
+
+// FILTER ONLY PRACTICE SESSION
 function applyFilter() {
-  const selectedCategory = document.getElementById('filterCategory').value;
+  const selectedCategory =
+    document.getElementById('filterCategory').value;
 
   questions = allQuestions.filter(q =>
     !selectedCategory || q.category === selectedCategory
   );
 
   currentIndex = 0;
+
   renderPractice();
 }
 
+
+// PRACTICE BOX
 function renderPractice() {
   if (questions.length === 0) {
-    document.getElementById('categoryBox').innerText = 'No Questions Found';
-    document.getElementById('questionBox').innerText = '';
-    document.getElementById('answerBox').innerText = '';
+    document.getElementById('categoryBox').innerText =
+      'No Questions Found';
+
+    document.getElementById('questionBox').innerText =
+      '';
+
+    document.getElementById('answerBox').innerText =
+      '';
+
     return;
   }
 
@@ -294,67 +310,101 @@ function renderPractice() {
     ' of ' + questions.length +
     ' | Category: ' + q.category;
 
-  document.getElementById('questionBox').innerText = q.question;
-  document.getElementById('answerBox').innerText = q.answer;
-  document.getElementById('answerBox').style.display = 'none';
+  document.getElementById('questionBox').innerText =
+    q.question;
+
+  document.getElementById('answerBox').innerText =
+    q.answer;
+
+  document.getElementById('answerBox').style.display =
+    'none';
 }
 
+
+// SHOW ANSWER
 function showAnswer() {
   if (questions.length > 0) {
-    document.getElementById('answerBox').style.display = 'block';
+    document.getElementById('answerBox').style.display =
+      'block';
   }
 }
 
+
+// NEXT
 function nextQuestion() {
   if (questions.length === 0) return;
-  currentIndex = (currentIndex + 1) % questions.length;
+
+  currentIndex =
+    (currentIndex + 1) % questions.length;
+
   renderPractice();
 }
 
+
+// PREVIOUS
 function previousQuestion() {
   if (questions.length === 0) return;
-  currentIndex = (currentIndex - 1 + questions.length) % questions.length;
+
+  currentIndex =
+    (currentIndex - 1 + questions.length) % questions.length;
+
   renderPractice();
 }
 
+
+// TABLE ALWAYS SHOWS ALL QUESTIONS
 function renderTable() {
-  const tbody = document.getElementById('questionTableBody');
+  const tbody =
+    document.getElementById('questionTableBody');
+
   tbody.innerHTML = '';
 
   allQuestions.forEach((q, i) => {
-    tbody.innerHTML += `
+    tbody.innerHTML += \`
       <tr>
-        <td>${i + 1}</td>
-        <td>${q.category}</td>
-        <td>${q.question}</td>
-        <td>${q.answer}</td>
+        <td>\${i + 1}</td>
+        <td>\${q.category}</td>
+        <td>\${q.question}</td>
+        <td>\${q.answer}</td>
         <td>
           <button
             class="secondary small-btn"
-            onclick="editQuestion(${q.id})">
+            onclick="editQuestion(\${q.id})">
             Edit
           </button>
 
           <button
             class="danger small-btn"
-            onclick="deleteQuestion(${q.id})">
+            onclick="deleteQuestion(\${q.id})">
             Delete
           </button>
         </td>
       </tr>
-    `;
+    \`;
   });
 }
 
-function editQuestion(id) {
-  const q = allQuestions.find(item => item.id === id);
 
-  document.getElementById('editId').value = q.id;
-  document.getElementById('category').value = q.category;
-  document.getElementById('question').value = q.question;
-  document.getElementById('answer').value = q.answer;
+// EDIT
+function editQuestion(id) {
+  const q =
+    allQuestions.find(item => item.id === id);
+
+  document.getElementById('editId').value =
+    q.id;
+
+  document.getElementById('category').value =
+    q.category;
+
+  document.getElementById('question').value =
+    q.question;
+
+  document.getElementById('answer').value =
+    q.answer;
 }
 
+
+// DELETE
 async function deleteQuestion(id) {
   if (!confirm('Delete this question?')) return;
 
@@ -365,6 +415,8 @@ async function deleteQuestion(id) {
   await loadQuestions();
 }
 
+
+// RESET FORM
 function resetForm() {
   document.getElementById('editId').value = '';
   document.getElementById('category').value = '';
@@ -373,43 +425,63 @@ function resetForm() {
   document.getElementById('saveMsg').innerText = '';
 }
 
-document.getElementById('qaForm')
-.addEventListener('submit', async (e) => {
-  e.preventDefault();
 
-  const id = document.getElementById('editId').value;
+// SAVE / UPDATE
+document
+  .getElementById('qaForm')
+  .addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-  const data = {
-    category: document.getElementById('category').value.trim(),
-    question: document.getElementById('question').value.trim(),
-    answer: document.getElementById('answer').value.trim()
-  };
+    const id =
+      document.getElementById('editId').value;
 
-  let url = '/api/questions';
-  let method = 'POST';
+    const data = {
+      category:
+        document.getElementById('category').value.trim(),
 
-  if (id) {
-    url = '/api/questions/' + id;
-    method = 'PUT';
-  }
+      question:
+        document.getElementById('question').value.trim(),
 
-  const res = await fetch(url, {
-    method,
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(data)
+      answer:
+        document.getElementById('answer').value.trim()
+    };
+
+    let url = '/api/questions';
+    let method = 'POST';
+
+    if (id) {
+      url = '/api/questions/' + id;
+      method = 'PUT';
+    }
+
+    try {
+      const res = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      const result = await res.json();
+
+      document.getElementById('saveMsg').innerText =
+        result.message || 'Saved Successfully';
+
+      resetForm();
+
+      await loadQuestions();
+
+    } catch (err) {
+      console.error(err);
+
+      document.getElementById('saveMsg').innerText =
+        'Error saving question';
+    }
   });
 
-  const result = await res.json();
 
-  document.getElementById('saveMsg').innerText =
-    result.message || 'Saved Successfully';
-
-  resetForm();
-  await loadQuestions();
-});
-
+// INITIAL LOAD
 loadQuestions();
 </script>
 
@@ -419,7 +491,9 @@ loadQuestions();
 });
 
 
-// APIs
+// ================= APIs =================
+
+// GET ALL
 app.get('/api/questions', (req, res) => {
   const rows = db.prepare(`
     SELECT id, category, question, answer
@@ -430,34 +504,62 @@ app.get('/api/questions', (req, res) => {
   res.json(rows);
 });
 
+
+// ADD
 app.post('/api/questions', (req, res) => {
-  const { category, question, answer } = req.body;
+  const {
+    category,
+    question,
+    answer
+  } = req.body;
 
   db.prepare(`
-    INSERT INTO questions (category, question, answer)
+    INSERT INTO questions
+    (category, question, answer)
     VALUES (?, ?, ?)
-  `).run(category, question, answer);
+  `).run(
+    category,
+    question,
+    answer
+  );
 
   res.json({
     message: 'Question saved successfully!'
   });
 });
 
+
+// UPDATE
 app.put('/api/questions/:id', (req, res) => {
   const { id } = req.params;
-  const { category, question, answer } = req.body;
+
+  const {
+    category,
+    question,
+    answer
+  } = req.body;
 
   db.prepare(`
     UPDATE questions
-    SET category = ?, question = ?, answer = ?
+    SET
+      category = ?,
+      question = ?,
+      answer = ?
     WHERE id = ?
-  `).run(category, question, answer, id);
+  `).run(
+    category,
+    question,
+    answer,
+    id
+  );
 
   res.json({
     message: 'Question updated successfully!'
   });
 });
 
+
+// DELETE
 app.delete('/api/questions/:id', (req, res) => {
   db.prepare(`
     DELETE FROM questions
@@ -468,6 +570,7 @@ app.delete('/api/questions/:id', (req, res) => {
     message: 'Question deleted successfully!'
   });
 });
+
 
 // Start server
 app.listen(PORT, () => {
