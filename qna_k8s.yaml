@@ -4,11 +4,11 @@ metadata:
   name: qna-practice
   namespace: qna-ns
 spec:
-  replicas: 6
+  replicas: 1
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 3
+      maxUnavailable: 1
       maxSurge: 1
   selector:
     matchLabels:
