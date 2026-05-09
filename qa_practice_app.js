@@ -186,24 +186,36 @@ function applyFilter() {
 
 function renderPractice() {
   if (questions.length === 0) {
-    document.getElementById('categoryBox').innerText = 'No Data';
-    document.getElementById('questionBox').innerText = '';
-    document.getElementById('answerBox').innerText = '';
+    document.getElementById('categoryBox').innerText =
+      'No Data';
+
+    document.getElementById('questionBox').innerText =
+      '';
+
+    document.getElementById('answerBox').innerText =
+      '';
+
     return;
   }
 
   const q = questions[currentIndex];
 
+  // Show serial number + category
   document.getElementById('categoryBox').innerText =
-    'Category: ' + q.category;
+    'Question ' + (currentIndex + 1) +
+    ' of ' + questions.length +
+    ' | Category: ' + q.category;
 
+  // Show question
   document.getElementById('questionBox').innerText =
     q.question;
 
+  // Show answer
   document.getElementById('answerBox').innerText =
     q.answer;
 
-  document.getElementById('answerBox').style.display = 'none';
+  document.getElementById('answerBox').style.display =
+    'none';
 }
 
 
