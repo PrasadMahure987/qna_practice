@@ -90,19 +90,9 @@ button {
   border-radius: 8px;
 }
 
-.primary {
-  background: #001f3f;
-  color: white;
-}
-
-.secondary {
-  background: #e5e7eb;
-}
-
-.danger {
-  background: #dc2626;
-  color: white;
-}
+.primary { background: #001f3f; color: white; }
+.secondary { background: #e5e7eb; }
+.danger { background: #dc2626; color: white; }
 
 .category-box {
   background: #dbeafe;
@@ -143,12 +133,43 @@ table th {
   padding: 6px 12px;
   font-size: 13px;
 }
+
+/* ================= FLOATING SCROLL BUTTON ================= */
+#topBtn {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 9999;
+
+  background: #ff9800;
+  color: white;
+  border: none;
+  padding: 14px 16px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+
+  display: none;
+
+  box-shadow: 0 5px 12px rgba(0,0,0,0.3);
+  transition: 0.3s;
+}
+
+#topBtn:hover {
+  background: #e68900;
+  transform: scale(1.15);
+}
+/* ========================================================= */
+
 </style>
 </head>
 
 <body>
 
 <h1>Q&A Practice App</h1>
+
+<!-- FLOATING BUTTON -->
+<button id="topBtn" onclick="scrollToTop()">⬆</button>
 
 <!-- PRACTICE SESSION -->
 <div class="card">
@@ -169,190 +190,55 @@ table th {
 
   <br>
 
-  <button
-    class="primary"
-    onclick="showAnswer()">
-    Show Answer
-  </button>
-
-  <button
-    class="secondary"
-    onclick="previousQuestion()">
-    Previous
-  </button>
-
-  <button
-    class="secondary"
-    onclick="nextQuestion()">
-    Next
-  </button>
+  <button class="primary" onclick="showAnswer()">Show Answer</button>
+  <button class="secondary" onclick="previousQuestion()">Previous</button>
+  <button class="secondary" onclick="nextQuestion()">Next</button>
 </div>
-
-
-<!-- ADD / EDIT -->
-<div class="card">
-  <h2>Add / Edit Question</h2>
-
-  <form id="qaForm">
-    <input
-      type="hidden"
-      id="editId"
-    />
-
-    <label>Select Category</label>
-    <select id="category" required>
-      <option value="">Select Category</option>
-    </select>
-
-    <input
-      id="question"
-      placeholder="Enter Question"
-      required
-    />
-
-    <textarea
-      id="answer"
-      rows="4"
-      placeholder="Enter Answer"
-      required
-    ></textarea>
-
-    <button
-      type="submit"
-      class="primary">
-      Save
-    </button>
-
-    <button
-      type="button"
-      class="secondary"
-      onclick="resetForm()">
-      Cancel
-    </button>
-  </form>
-
-  <p id="saveMsg"></p>
-</div>
-
-
-<!-- ALL QUESTIONS TABLE -->
-<div class="card">
-  <h2>All Questions</h2>
-
-  <table>
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Category</th>
-        <th>Question</th>
-        <th>Answer</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-
-    <tbody id="questionTableBody"></tbody>
-  </table>
-</div>
-
 
 <script>
 let allQuestions = [];
 let questions = [];
 let currentIndex = 0;
 
-const fixedCategories = [
-  'Linux',
-  'Kubernetes',
-  'Docker',
-  'Jenkins',
-  'DevOps',
-  'CI/CD',
-  'Git',
-  'Ansible',
-  'Terraform',
-  'Azure',
-  'AWS',
-  'Cloud',
-  'AD',
-  'IT',
-  'SQL',
-  'Network'
-];
+/* ================= SCROLL BUTTON LOGIC ================= */
+const topBtn = document.getElementById("topBtn");
 
+window.onscroll = function () {
+  if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+    topBtn.style.display = "block";
+  } else {
+    topBtn.style.display = "none";
+  }
+};
 
-// Load category dropdown for Add/Edit form
-function loadFormCategories() {
-  const select = document.getElementById('category');
-
-  select.innerHTML =
-    '<option value="">Select Category</option>';
-
-  fixedCategories.forEach(cat => {
-    select.innerHTML +=
-      '<option value="' + cat + '">' + cat + '</option>';
+function scrollToTop() {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
   });
 }
+/* ======================================================= */
 
-
-// LOAD QUESTIONS
-async function loadQuestions() {
-  const res = await fetch('/api/questions');
-  allQuestions = await res.json();
-
-  renderTable();
-  populatePracticeCategory();
-  applyFilter();
+function showAnswer() {
+  if (questions.length > 0) {
+    document.getElementById('answerBox').style.display = 'block';
+  }
 }
 
-
-// CATEGORY DROPDOWN FOR PRACTICE SESSION
-function populatePracticeCategory() {
-  const select =
-    document.getElementById('filterCategory');
-
-  const selectedValue = select.value;
-
-  select.innerHTML =
-    '<option value="">All Categories</option>';
-
-  fixedCategories.forEach(cat => {
-    select.innerHTML +=
-      '<option value="' + cat + '">' + cat + '</option>';
-  });
-
-  select.value = selectedValue;
-}
-
-
-// FILTER ONLY PRACTICE SESSION
-function applyFilter() {
-  const selectedCategory =
-    document.getElementById('filterCategory').value;
-
-  questions = allQuestions.filter(q =>
-    !selectedCategory || q.category === selectedCategory
-  );
-
-  currentIndex = 0;
-
+function nextQuestion() {
+  if (questions.length === 0) return;
+  currentIndex = (currentIndex + 1) % questions.length;
   renderPractice();
 }
 
+function previousQuestion() {
+  if (questions.length === 0) return;
+  currentIndex = (currentIndex - 1 + questions.length) % questions.length;
+  renderPractice();
+}
 
-// PRACTICE BOX
 function renderPractice() {
-  if (questions.length === 0) {
-    document.getElementById('categoryBox').innerText =
-      'No Questions Found';
-
-    document.getElementById('questionBox').innerText =
-      '';
-
-    document.getElementById('answerBox').innerText =
-      '';
-
-    return;
-  }
+  if (questions.length === 0) return;
 
   const q = questions[currentIndex];
 
@@ -361,179 +247,18 @@ function renderPractice() {
     ' of ' + questions.length +
     ' | Category: ' + q.category;
 
-  document.getElementById('questionBox').innerText =
-    q.question;
-
-  document.getElementById('answerBox').innerText =
-    q.answer;
-
-  document.getElementById('answerBox').style.display =
-    'none';
+  document.getElementById('questionBox').innerText = q.question;
+  document.getElementById('answerBox').innerText = q.answer;
+  document.getElementById('answerBox').style.display = 'none';
 }
 
-
-// SHOW ANSWER
-function showAnswer() {
-  if (questions.length > 0) {
-    document.getElementById('answerBox').style.display =
-      'block';
-  }
-}
-
-
-// NEXT
-function nextQuestion() {
-  if (questions.length === 0) return;
-
-  currentIndex =
-    (currentIndex + 1) % questions.length;
-
+async function loadQuestions() {
+  const res = await fetch('/api/questions');
+  allQuestions = await res.json();
+  questions = allQuestions;
   renderPractice();
 }
 
-
-// PREVIOUS
-function previousQuestion() {
-  if (questions.length === 0) return;
-
-  currentIndex =
-    (currentIndex - 1 + questions.length) % questions.length;
-
-  renderPractice();
-}
-
-
-// TABLE ALWAYS SHOWS ALL QUESTIONS
-function renderTable() {
-  const tbody =
-    document.getElementById('questionTableBody');
-
-  tbody.innerHTML = '';
-
-  allQuestions.forEach((q, i) => {
-    tbody.innerHTML += \`
-      <tr>
-        <td>\${i + 1}</td>
-        <td>\${q.category}</td>
-        <td>\${q.question}</td>
-        <td>\${q.answer}</td>
-        <td>
-          <button
-            class="secondary small-btn"
-            onclick="editQuestion(\${q.id})">
-            Edit
-          </button>
-
-          <button
-            class="danger small-btn"
-            onclick="deleteQuestion(\${q.id})">
-            Delete
-          </button>
-        </td>
-      </tr>
-    \`;
-  });
-}
-
-
-// EDIT
-function editQuestion(id) {
-  const q =
-    allQuestions.find(item => item.id === id);
-
-  document.getElementById('editId').value =
-    q.id;
-
-  document.getElementById('category').value =
-    q.category;
-
-  document.getElementById('question').value =
-    q.question;
-
-  document.getElementById('answer').value =
-    q.answer;
-}
-
-
-// DELETE
-async function deleteQuestion(id) {
-  if (!confirm('Delete this question?')) return;
-
-  await fetch('/api/questions/' + id, {
-    method: 'DELETE'
-  });
-
-  await loadQuestions();
-}
-
-
-// RESET FORM
-function resetForm() {
-  document.getElementById('editId').value = '';
-  document.getElementById('category').value = '';
-  document.getElementById('question').value = '';
-  document.getElementById('answer').value = '';
-  document.getElementById('saveMsg').innerText = '';
-}
-
-
-// SAVE / UPDATE
-document
-  .getElementById('qaForm')
-  .addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const id =
-      document.getElementById('editId').value;
-
-    const data = {
-      category:
-        document.getElementById('category').value.trim(),
-
-      question:
-        document.getElementById('question').value.trim(),
-
-      answer:
-        document.getElementById('answer').value.trim()
-    };
-
-    let url = '/api/questions';
-    let method = 'POST';
-
-    if (id) {
-      url = '/api/questions/' + id;
-      method = 'PUT';
-    }
-
-    try {
-      const res = await fetch(url, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      });
-
-      const result = await res.json();
-
-      document.getElementById('saveMsg').innerText =
-        result.message || 'Saved Successfully';
-
-      resetForm();
-
-      await loadQuestions();
-
-    } catch (err) {
-      console.error(err);
-
-      document.getElementById('saveMsg').innerText =
-        'Error saving question';
-    }
-  });
-
-
-// INITIAL LOAD
-loadFormCategories();
 loadQuestions();
 </script>
 
@@ -545,7 +270,6 @@ loadQuestions();
 
 // ================= APIs =================
 
-// GET ALL
 app.get('/api/questions', (req, res) => {
   const rows = db.prepare(`
     SELECT id, category, question, answer
@@ -556,73 +280,37 @@ app.get('/api/questions', (req, res) => {
   res.json(rows);
 });
 
-
-// ADD
 app.post('/api/questions', (req, res) => {
-  const {
-    category,
-    question,
-    answer
-  } = req.body;
+  const { category, question, answer } = req.body;
 
   db.prepare(`
-    INSERT INTO questions
-    (category, question, answer)
+    INSERT INTO questions (category, question, answer)
     VALUES (?, ?, ?)
-  `).run(
-    category,
-    question,
-    answer
-  );
+  `).run(category, question, answer);
 
-  res.json({
-    message: 'Question saved successfully!'
-  });
+  res.json({ message: 'Question saved successfully!' });
 });
 
-
-// UPDATE
 app.put('/api/questions/:id', (req, res) => {
   const { id } = req.params;
-
-  const {
-    category,
-    question,
-    answer
-  } = req.body;
+  const { category, question, answer } = req.body;
 
   db.prepare(`
     UPDATE questions
-    SET
-      category = ?,
-      question = ?,
-      answer = ?
+    SET category = ?, question = ?, answer = ?
     WHERE id = ?
-  `).run(
-    category,
-    question,
-    answer,
-    id
-  );
+  `).run(category, question, answer, id);
 
-  res.json({
-    message: 'Question updated successfully!'
-  });
+  res.json({ message: 'Question updated successfully!' });
 });
 
-
-// DELETE
 app.delete('/api/questions/:id', (req, res) => {
   db.prepare(`
-    DELETE FROM questions
-    WHERE id = ?
+    DELETE FROM questions WHERE id = ?
   `).run(req.params.id);
 
-  res.json({
-    message: 'Question deleted successfully!'
-  });
+  res.json({ message: 'Question deleted successfully!' });
 });
-
 
 // Start server
 app.listen(PORT, () => {
