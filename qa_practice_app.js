@@ -272,11 +272,13 @@ const fixedCategories = [
   'Terraform',
   'Azure',
   'AWS',
+  'GCP',
   'Cloud',
   'AD',
   'IT',
   'SQL',
-  'Network'
+  'Network',
+  'HR'
 ];
 
 
