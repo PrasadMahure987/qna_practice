@@ -276,6 +276,7 @@ const fixedCategories = [
   'Cloud',
   'AD',
   'IT',
+  'DNS',
   'SQL',
   'Network',
   'HR'
