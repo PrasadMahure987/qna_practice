@@ -280,6 +280,7 @@ const fixedCategories = [
   'Mail',
   'SQL',
   'Network',
+  'Certificate',
   'HR'
 ];
 
