@@ -18,8 +18,10 @@
   },
   "homepage": "https://github.com/PrasadMahure987/qna_practice#readme",
   "dependencies": {
-    "better-sqlite3": "^12.9.0",
+    "better-sqlite3": "^11.7.0",
     "body-parser": "^2.2.2",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "bcryptjs": "^2.4.3"
   }
 }
