@@ -1,0 +1,44 @@
+Cloudflare Tunnel Setup (Step-by-Step)
+
+Your current app:
+http://192.168.2.11:30008
+
+Step 1 — Login to Linux VM
+SSH into your VM:
+
+Step 2 — Verify App is Running
+Test locally:
+curl http://localhost:30008
+
+Step 3 — Download Cloudflare Tunnel Client
+Install cloudflared
+
+wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+sudo dpkg -i cloudflared-linux-amd64.deb
+
+Check:
+cloudflared --version
+
+Step 4 — Start Instant Free Tunnel (No Account Needed)
+
+
+FOR QnA App
+Run:
+cloudflared tunnel --url http://localhost:30008
+
+To start and run in background run below command and copy url
+nohup cloudflared tunnel --url http://localhost:30008 > tunnel.log 2>&1 &
+tail -f tunnel.log
+
+FOR my-page APP
+Run:
+cloudflared tunnel --url http://localhost:30007
+
+To start and run in background run below command and copy url
+nohup cloudflared tunnel --url http://localhost:30007 > tunnel.log 2>&1 &
+tail -f tunnel.log
+
+Public link
+
+PMVML02:-  https://entirely-snowboard-consolidation-outlet.trycloudflare.com 
+PMVML03:- https://student-influence-feel-continued.trycloudflare.com/
