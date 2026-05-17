@@ -159,14 +159,6 @@ table th {
     <option value="">All Categories</option>
   </select>
 
-  <label>Search Question</label>
-  <input
-    type="text"
-    id="searchKeyword"
-    placeholder="Search by keyword..."
-    onkeyup="applyFilter()"
-  />
-
   <div class="category-box" id="categoryBox">
     Loading...
   </div>
@@ -340,23 +332,9 @@ function applyFilter() {
   const selectedCategory =
     document.getElementById('filterCategory').value;
 
-  const keyword =
-    document.getElementById('searchKeyword')
-      .value
-      .toLowerCase()
-      .trim();
-
-  questions = allQuestions.filter(q => {
-    const matchCategory =
-      !selectedCategory || q.category === selectedCategory;
-
-    const matchKeyword =
-      !keyword ||
-      q.question.toLowerCase().includes(keyword) ||
-      q.answer.toLowerCase().includes(keyword);
-
-    return matchCategory && matchKeyword;
-  });
+  questions = allQuestions.filter(q =>
+    !selectedCategory || q.category === selectedCategory
+  );
 
   currentIndex = 0;
 
