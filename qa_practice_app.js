@@ -268,7 +268,6 @@ const fixedCategories = [
   'DevOps',
   'CI/CD',
   'Git',
-  'Python',
   'Ansible',
   'Terraform',
   'Azure',
